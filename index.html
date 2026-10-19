@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EMBER — Live Restaurant Floor</title>
+<style>
+:root{--bg:#101311;--panel:#191e1a;--panel2:#202720;--gold:#d8b477;--text:#f5f0e6;--muted:#a7b0a5;--green:#24b873;--red:#ef5350;--line:#303a31}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:clamp(14px,3vw,34px) clamp(12px,3vw,36px) 48px;background:radial-gradient(ellipse at 15% 0%,#26352a 0%,transparent 36%),radial-gradient(ellipse at 95% 15%,#34291b 0%,transparent 30%),var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+.toolbar{max-width:1320px;margin:0 auto 18px;display:flex;flex-wrap:wrap;align-items:center;gap:16px 22px;padding:24px 26px;background:linear-gradient(135deg,rgba(31,39,32,.96),rgba(23,28,24,.96));border:1px solid #394339;border-radius:22px;box-shadow:0 18px 50px #0005;backdrop-filter:blur(12px)}.toolbar>div:first-child{flex:1 1 340px}.toolbar h1{font-size:clamp(25px,3.5vw,38px);line-height:1.05;letter-spacing:-1.2px;margin:0 0 10px;color:#fff7e9}.toolbar h1:before{content:'✦';color:var(--gold);font-size:.7em;margin-right:12px}.subtitle{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.legend{display:flex;flex-wrap:wrap;gap:9px;align-items:center;font-size:12px;font-weight:750;color:#e8e9df}.legend span{display:flex;align-items:center;gap:8px;background:#111612;padding:10px 13px;border:1px solid #394239;border-radius:999px}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;box-shadow:0 0 12px currentColor}.vacant{background:var(--green);color:var(--green)}.occupied-dot{background:var(--red);color:var(--red)}
+#resetButton{border:1px solid #8b7049;background:linear-gradient(135deg,#d8b477,#b68b4c);color:#1a1a14;border-radius:12px;padding:13px 17px;cursor:pointer;font-size:13px;font-weight:850;box-shadow:0 5px 18px #d8b47726;transition:transform .18s,filter .18s}#resetButton:hover{filter:brightness(1.1);transform:translateY(-2px)}#resetButton:focus-visible{outline:3px solid #f5d59b;outline-offset:3px}#connectionStatus{font-size:12px;color:#b9c5b8;flex:1 1 190px;min-width:180px}.stats{max-width:1320px;margin:0 auto 20px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.stat{position:relative;overflow:hidden;padding:18px 20px;background:linear-gradient(145deg,#1d241e,#171c18);border:1px solid #343e34;border-radius:18px;box-shadow:0 10px 28px #0002}.stat:after{content:'';position:absolute;width:72px;height:72px;border-radius:50%;right:-22px;top:-28px;background:var(--accent,#d8b477);opacity:.11;filter:blur(2px)}.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;font-weight:800;color:#9da99c}.stat-value{font-size:clamp(25px,3vw,34px);font-weight:850;letter-spacing:-1px;margin-top:5px;color:#fff8ec}.stat-sub{font-size:11px;color:#8f9b8f;margin-top:3px}.stat.total{--accent:#d8b477}.stat.available{--accent:#24b873}.stat.busy{--accent:#ef5350}.stat.rate{--accent:#83b9e8}
+.layout-wrap{width:100%;overflow:auto;padding:10px 0 30px;display:flex;justify-content:center}.floor-plan{position:relative;flex:0 0 390px;width:390px;height:1180px;margin:0 auto;background:linear-gradient(145deg,#252c25,#1b211c 60%,#25281f);border:1px solid #4a5548;border-radius:26px;box-shadow:0 24px 70px #0008,inset 0 1px #ffffff0b}.floor-plan:before{content:'FLOOR PLAN  /  LIVE';position:absolute;left:6px;top:-13px;color:#778475;font-size:10px;font-weight:850;letter-spacing:2px}.table{position:absolute;display:flex;align-items:center;justify-content:center;width:38px;height:30px;border:1px solid #ffffff2b;border-radius:9px;background:linear-gradient(145deg,#2fd18a,#168455);color:#fff;font-size:12px;font-weight:850;letter-spacing:-.3px;line-height:1;cursor:pointer;user-select:none;padding:0;box-shadow:0 3px 10px #0c9b5a40,inset 0 1px #ffffff4d;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease,background .16s ease}.table:before{content:'';position:absolute;inset:3px;border:1px solid #ffffff20;border-radius:6px;pointer-events:none}.table.diamond{width:34px;height:34px;transform:rotate(45deg);border-radius:0}.table.diamond span{transform:rotate(-45deg)}.table:hover{filter:brightness(1.16);transform:translateY(-2px) scale(1.06);z-index:5;box-shadow:0 7px 18px #0006}.table.selected{outline:3px solid var(--gold);z-index:6;filter:brightness(1.25);box-shadow:0 0 0 4px #d8b47733,0 0 18px #d8b47788!important;transform:scale(1.08)!important}.table{touch-action:none}.table.occupied{background:linear-gradient(145deg,#ff7069,#c82f3b);box-shadow:0 3px 12px #ef44444a,inset 0 1px #ffffff4d}.table.occupied:before{border-color:#ffffff2b}.table:focus-visible{outline:3px solid #f5d59b;z-index:7}.floor-plan .table,.floor-plan .table.diamond{width:38px!important;height:30px!important;min-width:38px;min-height:30px;max-width:38px;max-height:30px;transform:none!important;border-radius:9px!important}.floor-plan .table.diamond span{transform:none!important}
+@media(max-width:700px){body{padding:10px 8px 24px}.toolbar{margin-bottom:12px;padding:18px;border-radius:17px;gap:12px}.legend{width:100%}#resetButton{flex:1}.layout-wrap{justify-content:flex-start}.floor-plan{margin:0}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}.stat{padding:14px 15px;border-radius:14px}.stat-value{font-size:27px}}
+@media(max-width:420px){.floor-plan{zoom:.92}.toolbar h1{font-size:25px}.subtitle{font-size:12px}.stat-label{font-size:10px}}
+@media(min-width:421px) and (max-width:600px){.floor-plan{zoom:1.12}}@media(min-width:601px) and (max-width:900px){.floor-plan{zoom:1.45}}@media(min-width:901px){.floor-plan{zoom:1.65}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div><h1>Restaurant Table Status</h1><p class="subtitle">Live floor plan · Tap one table to toggle it, or swipe across several tables to change them all instantly. Green = vacant · Red = occupied.</p></div>
+  <div class="legend"><span><i class="dot vacant"></i> Vacant</span><span><i class="dot occupied-dot"></i> Occupied</span></div>
+  <button id="resetButton" type="button">Reset all for tomorrow</button>
+  <span id="connectionStatus" role="status">Local preview — Firebase not connected</span>
+</header>
+
+<section class="stats" aria-label="Live table summary">
+  <div class="stat total"><div class="stat-label">Total tables</div><div class="stat-value" id="totalCount">—</div><div class="stat-sub">All floor sections</div></div>
+  <div class="stat available"><div class="stat-label">Vacant</div><div class="stat-value" id="vacantCount">—</div><div class="stat-sub">Ready for guests</div></div>
+  <div class="stat busy"><div class="stat-label">Occupied</div><div class="stat-value" id="occupiedCount">—</div><div class="stat-sub">Currently in use</div></div>
+  <div class="stat rate"><div class="stat-label">Occupancy</div><div class="stat-value" id="occupancyRate">—%</div><div class="stat-sub">Live floor utilization</div></div>
+</section>
+<div class="layout-wrap">
+  <main class="floor-plan" id="floorPlan" aria-label="Restaurant table layout">
+    <!-- Main upper table grid -->
+
+    <button class="table" style="left:103px;top:753px" data-table="119">119</button><button class="table" style="left:103px;top:719px" data-table="114">114</button>
+    <button class="table" style="left:140px;top:753px" data-table="118">118</button><button class="table" style="left:140px;top:719px" data-table="113">113</button>
+    <button class="table" style="left:177px;top:753px" data-table="117">117</button><button class="table" style="left:177px;top:719px" data-table="112">112</button>
+    <button class="table" style="left:213px;top:753px" data-table="116">116</button><button class="table" style="left:213px;top:719px" data-table="111">111</button>
+    <button class="table" style="left:250px;top:753px" data-table="115">115</button><button class="table" style="left:250px;top:719px" data-table="110">110</button>
+
+    <button class="table" style="left:103px;top:684px" data-table="109">109</button><button class="table" style="left:103px;top:650px" data-table="104">104</button>
+    <button class="table" style="left:140px;top:684px" data-table="108">108</button><button class="table" style="left:140px;top:650px" data-table="103">103</button>
+    <button class="table" style="left:177px;top:684px" data-table="107">107</button><button class="table" style="left:177px;top:650px" data-table="102">102</button>
+    <button class="table" style="left:213px;top:684px" data-table="106">106</button><button class="table" style="left:213px;top:650px" data-table="101">101</button>
+    <button class="table" style="left:250px;top:684px" data-table="105">105</button><button class="table" style="left:250px;top:650px" data-table="100">100</button>
+    <button class="table" style="left:103px;top:615px" data-table="99">99</button><button class="table" style="left:103px;top:581px" data-table="94">94</button><button class="table" style="left:103px;top:546px" data-table="89">89</button><button class="table" style="left:103px;top:512px" data-table="84">84</button>
+    <button class="table" style="left:140px;top:615px" data-table="98">98</button><button class="table" style="left:140px;top:581px" data-table="93">93</button><button class="table" style="left:140px;top:546px" data-table="88">88</button><button class="table" style="left:140px;top:512px" data-table="83">83</button>
+    <button class="table" style="left:177px;top:615px" data-table="97">97</button><button class="table" style="left:177px;top:581px" data-table="92">92</button><button class="table" style="left:177px;top:546px" data-table="87">87</button><button class="table" style="left:177px;top:512px" data-table="82">82</button>
+    <button class="table" style="left:213px;top:615px" data-table="96">96</button><button class="table" style="left:213px;top:581px" data-table="91">91</button><button class="table" style="left:213px;top:546px" data-table="86">86</button><button class="table" style="left:213px;top:512px" data-table="81">81</button>
+    <button class="table" style="left:250px;top:615px" data-table="95">95</button><button class="table" style="left:250px;top:581px" data-table="90">90</button><button class="table" style="left:250px;top:546px" data-table="85">85</button><button class="table" style="left:250px;top:512px" data-table="80">80</button>
+
+    <!-- Middle diamond-table cluster -->
+    <button class="table diamond" style="left:141px;top:477px" data-table="76"><span>76</span></button>
+    <button class="table diamond" style="left:141px;top:442px" data-table="74"><span>74</span></button>
+    <button class="table diamond" style="left:141px;top:408px" data-table="72"><span>72</span></button>
+    <button class="table diamond" style="left:141px;top:373px" data-table="48"><span>48</span></button>
+    <button class="table diamond" style="left:184px;top:477px" data-table="75"><span>75</span></button>
+    <button class="table diamond" style="left:184px;top:442px" data-table="73"><span>73</span></button>
+    <button class="table diamond" style="left:184px;top:408px" data-table="71"><span>71</span></button>
+    <button class="table diamond" style="left:184px;top:373px" data-table="47"><span>47</span></button>
+    <button class="table diamond" style="left:173px;top:344px" data-table="60"><span>60</span></button>
+    <button class="table diamond" style="left:173px;top:314px" data-table="59"><span>59</span></button>
+    <button class="table diamond" style="left:173px;top:284px" data-table="58"><span>58</span></button>
+    <button class="table diamond" style="left:173px;top:253px" data-table="57"><span>57</span></button>
+    <button class="table diamond" style="left:173px;top:223px" data-table="56"><span>56</span></button>
+    <button class="table diamond" style="left:173px;top:193px" data-table="55"><span>55</span></button>
+    <button class="table diamond" style="left:173px;top:163px" data-table="54"><span>54</span></button>
+    <button class="table diamond" style="left:173px;top:132px" data-table="53"><span>53</span></button>
+    <button class="table diamond" style="left:173px;top:102px" data-table="52"><span>52</span></button>
+    <button class="table diamond" style="left:173px;top:72px" data-table="51"><span>51</span></button>
+
+    <!-- Rectangular tables along the upper-right side -->
+    <button class="table" style="left:58px;top:477px" data-table="70">70</button><button class="table" style="left:58px;top:442px" data-table="69">69</button><button class="table" style="left:58px;top:408px" data-table="68">68</button><button class="table" style="left:58px;top:373px" data-table="67">67</button>
+    <button class="table" style="left:58px;top:72px" data-table="61">61</button><button class="table" style="left:58px;top:109px" data-table="62">62</button><button class="table" style="left:58px;top:145px" data-table="63">63</button><button class="table" style="left:58px;top:182px" data-table="64">64</button><button class="table" style="left:58px;top:219px" data-table="65">65</button><button class="table" style="left:58px;top:256px" data-table="66">66</button>
+
+    <!-- Lower rows: tables 42–19 -->
+    <button class="table" style="left:287px;top:753px" data-table="42">42</button><button class="table" style="left:287px;top:719px" data-table="40">40</button><button class="table" style="left:287px;top:684px" data-table="38">38</button><button class="table" style="left:287px;top:650px" data-table="36">36</button><button class="table" style="left:287px;top:615px" data-table="34">34</button><button class="table" style="left:287px;top:581px" data-table="32">32</button><button class="table" style="left:287px;top:546px" data-table="30">30</button><button class="table" style="left:289px;top:512px" data-table="28">28</button><button class="table" style="left:287px;top:477px" data-table="26">26</button><button class="table" style="left:287px;top:442px" data-table="24">24</button><button class="table" style="left:287px;top:408px" data-table="22">22</button><button class="table" style="left:287px;top:373px" data-table="20">20</button>
+    <button class="table" style="left:330px;top:753px" data-table="41">41</button><button class="table" style="left:330px;top:719px" data-table="39">39</button><button class="table" style="left:330px;top:684px" data-table="37">37</button><button class="table" style="left:330px;top:650px" data-table="35">35</button><button class="table" style="left:330px;top:615px" data-table="33">33</button><button class="table" style="left:330px;top:581px" data-table="31">31</button><button class="table" style="left:330px;top:546px" data-table="29">29</button><button class="table" style="left:330px;top:512px" data-table="27">27</button><button class="table" style="left:330px;top:477px" data-table="25">25</button><button class="table" style="left:330px;top:442px" data-table="23">23</button><button class="table" style="left:330px;top:408px" data-table="21">21</button><button class="table" style="left:330px;top:373px" data-table="19">19</button>
+
+    <!-- Small two-row table groups 1–18 -->
+    <button class="table" style="left:287px;top:348px" data-table="18">18</button><button class="table" style="left:287px;top:314px" data-table="16">16</button><button class="table" style="left:287px;top:279px" data-table="14">14</button><button class="table" style="left:287px;top:245px" data-table="12">12</button><button class="table" style="left:287px;top:210px" data-table="10">10</button><button class="table" style="left:287px;top:176px" data-table="8">8</button><button class="table" style="left:287px;top:141px" data-table="6">6</button><button class="table" style="left:287px;top:107px" data-table="4">4</button><button class="table" style="left:287px;top:72px" data-table="2">2</button>
+    <button class="table" style="left:330px;top:348px" data-table="17">17</button><button class="table" style="left:330px;top:314px" data-table="15">15</button><button class="table" style="left:330px;top:279px" data-table="13">13</button><button class="table" style="left:330px;top:245px" data-table="11">11</button><button class="table" style="left:330px;top:210px" data-table="9">9</button><button class="table" style="left:330px;top:176px" data-table="7">7</button><button class="table" style="left:330px;top:141px" data-table="5">5</button><button class="table" style="left:330px;top:107px" data-table="3">3</button><button class="table" style="left:330px;top:72px" data-table="1">1</button>
+    <!-- Tables 121–124 on the left side, starting level with table 84 -->
+    <button class="table" style="left:58px;top:512px" data-table="121">121</button>
+    <button class="table" style="left:58px;top:546px" data-table="122">122</button>
+    <button class="table" style="left:58px;top:581px" data-table="123">123</button>
+    <button class="table" style="left:58px;top:615px" data-table="124">124</button>
+    <!-- Tables 125–129 arranged vertically in the space between the 104 and 119 levels -->
+    <button class="table" style="left:58px;top:656px;transform:scale(.5);transform-origin:left top" data-table="125">125</button>
+    <button class="table" style="left:58px;top:682px;transform:scale(.5);transform-origin:left top" data-table="126">126</button>
+    <button class="table" style="left:58px;top:708px;transform:scale(.5);transform-origin:left top" data-table="127">127</button>
+    <button class="table" style="left:58px;top:734px;transform:scale(.5);transform-origin:left top" data-table="128">128</button>
+    <button class="table" style="left:58px;top:760px;transform:scale(.5);transform-origin:left top" data-table="129">129</button>
+  </main>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+
+  // YOUR WORKING FIREBASE CONFIG
+ // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCxtzdHRjxNkxlr3nJum6syz7EKGPkhdig",
+  authDomain: "oneone-d1c59.firebaseapp.com",
+databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "oneone-d1c59",
+  storageBucket: "oneone-d1c59.firebasestorage.app",
+  messagingSenderId: "587577047309",
+  appId: "1:587577047309:web:bc162cf114040fbf32d844",
+  measurementId: "G-WTF1YV1T23"
+};
+
+  const tableButtons = [...document.querySelectorAll('.table')];
+  const statusEl = document.getElementById('connectionStatus');
+  const resetButton = document.getElementById('resetButton');
+  let pointerStart = null;
+  let dragSelecting = false;
+  let swipeTables = new Set();
+  let suppressClick = false;
+  const tableStatus = Object.fromEntries(tableButtons.map((b) => [b.dataset.table, 'vacant']));
+
+  // Initialize Firebase directly (Removed Anonymous Auth)
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const tablesRef = ref(db, 'restaurant/tableStatuses');
+
+  function renderTable(id, status) {
+    const button = tableButtons.find((b) => b.dataset.table === String(id));
+    if (!button) return;
+    tableStatus[id] = status === 'occupied' ? 'occupied' : 'vacant';
+    button.classList.toggle('occupied', tableStatus[id] === 'occupied');
+    button.setAttribute('aria-pressed', tableStatus[id] === 'occupied' ? 'true' : 'false');
+    button.setAttribute('aria-label', `Table ${id}: ${tableStatus[id]}`);
+    button.title = `Table ${id} — ${tableStatus[id] === 'occupied' ? 'Occupied' : 'Vacant'}`;
+    updateStats();
+  }
+  function renderAll(statuses) {
+    tableButtons.forEach((b) => renderTable(b.dataset.table, statuses?.[b.dataset.table] || 'vacant'));
+  }
+  function updateStats() {
+    const total = tableButtons.length;
+    const occupied = Object.values(tableStatus).filter((status) => status === 'occupied').length;
+    const vacant = total - occupied;
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('vacantCount').textContent = vacant;
+    document.getElementById('occupiedCount').textContent = occupied;
+    document.getElementById('occupancyRate').textContent = `${total ? Math.round(occupied / total * 100) : 0}%`;
+  }
+
+  statusEl.textContent = 'Connecting to Live Sync...';
+  onValue(tablesRef, (snapshot) => {
+    renderAll(snapshot.val() || {});
+    statusEl.textContent = '🟢 Live — synced with all devices';
+    statusEl.style.color = '#24b873';
+  }, (error) => {
+    statusEl.textContent = `🔴 Database Error: ${error.message}`;
+    statusEl.style.color = '#ef5350';
+  });
+
+  function paintSelection() {
+    tableButtons.forEach((b) => b.classList.toggle('selected', swipeTables.has(b.dataset.table)));
+  }
+  async function applySwipe() {
+    const ids = [...swipeTables];
+    if (!ids.length) return;
+    const target = tableStatus[ids[0]] === 'occupied' ? 'vacant' : 'occupied';
+    try {
+      await Promise.all(ids.map(id => set(ref(db, `restaurant/tableStatuses/${id}`), target)));
+    } catch (error) {
+      alert(`Could not update the swiped tables: ${error.message}`);
+    }
+    swipeTables.clear();
+    paintSelection();
+  }
+
+  updateStats();
+  tableButtons.forEach((button) => {
+    button.setAttribute('aria-label', `Table ${button.dataset.table}: vacant`);
+    button.setAttribute('aria-pressed', 'false');
+    button.title = `Table ${button.dataset.table} — Vacant`;
+    button.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 && event.pointerType === 'mouse') return;
+      pointerStart = { x: event.clientX, y: event.clientY, id: button.dataset.table, pointerId: event.pointerId };
+      dragSelecting = false;
+      swipeTables = new Set([button.dataset.table]);
+      paintSelection();
+    });
+    button.addEventListener('click', async (event) => {
+      if (suppressClick) { event.preventDefault(); suppressClick = false; return; }
+      const id = button.dataset.table;
+      const next = tableStatus[id] === 'occupied' ? 'vacant' : 'occupied';
+      try { await set(ref(db, `restaurant/tableStatuses/${id}`), next); }
+      catch (error) { alert(`Could not update table ${id}: ${error.message}`); }
+    });
+  });
+
+  document.addEventListener('pointermove', (event) => {
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+    if (!dragSelecting && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 7) dragSelecting = true;
+    if (dragSelecting) {
+      const under = document.elementFromPoint(event.clientX, event.clientY)?.closest('.table');
+      if (under) { swipeTables.add(under.dataset.table); paintSelection(); }
+    }
+  });
+  window.addEventListener('pointerup', async (event) => {
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+    if (dragSelecting) {
+      suppressClick = true;
+      await applySwipe();
+    } else {
+      swipeTables.clear();
+      paintSelection();
+    }
+    pointerStart = null;
+    dragSelecting = false;
+  });
+  window.addEventListener('pointercancel', () => {
+    pointerStart = null;
+    dragSelecting = false;
+    swipeTables.clear();
+    paintSelection();
+  });
+
+  resetButton.addEventListener('click', async () => {
+    if (!confirm('Reset every table to VACANT (green) for the new day?')) return;
+    const vacant = Object.fromEntries(tableButtons.map((b) => [b.dataset.table, 'vacant']));
+    try {
+      await set(tablesRef, vacant);
+    } catch (error) {
+      alert(`Reset failed: ${error.message}`);
+    }
+  });
+</script>
+</body>
+</html>
