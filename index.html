@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>EMBER — Live Restaurant Floor</title>
+<title>BOLD KITCHEN</title>
 <style>
 :root{--bg:#101311;--panel:#191e1a;--panel2:#202720;--gold:#d8b477;--text:#f5f0e6;--muted:#a7b0a5;--green:#24b873;--red:#ef5350;--line:#303a31}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:clamp(14px,3vw,34px) clamp(12px,3vw,36px) 48px;background:radial-gradient(ellipse at 15% 0%,#26352a 0%,transparent 36%),radial-gradient(ellipse at 95% 15%,#34291b 0%,transparent 30%),var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
@@ -18,10 +18,10 @@
 </head>
 <body>
 <header class="toolbar">
-  <div><h1>Restaurant Table Status</h1><p class="subtitle">Live floor plan · Tap one table to toggle it, or swipe across several tables to change them all instantly. Green = vacant · Red = occupied.</p></div>
+  <div><h1>Restaurant Table Status</h1><p class="subtitle">Live floor plan · Tap one table to toggle it. (Swipe works on laptops only). Green = vacant · Red = occupied.</p></div>
   <div class="legend"><span><i class="dot vacant"></i> Vacant</span><span><i class="dot occupied-dot"></i> Occupied</span></div>
   <button id="resetButton" type="button">Reset all for tomorrow</button>
-  <span id="connectionStatus" role="status">Local preview — Firebase not connected</span>
+  <span id="connectionStatus" role="status">Connecting to Live Sync...</span>
 </header>
 
 <section class="stats" aria-label="Live table summary">
@@ -33,7 +33,6 @@
 <div class="layout-wrap">
   <main class="floor-plan" id="floorPlan" aria-label="Restaurant table layout">
     <!-- Main upper table grid -->
-
     <button class="table" style="left:103px;top:753px" data-table="119">119</button><button class="table" style="left:103px;top:719px" data-table="114">114</button>
     <button class="table" style="left:140px;top:753px" data-table="118">118</button><button class="table" style="left:140px;top:719px" data-table="113">113</button>
     <button class="table" style="left:177px;top:753px" data-table="117">117</button><button class="table" style="left:177px;top:719px" data-table="112">112</button>
@@ -99,30 +98,29 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-
   // YOUR WORKING FIREBASE CONFIG
- // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCxtzdHRjxNkxlr3nJum6syz7EKGPkhdig",
-  authDomain: "oneone-d1c59.firebaseapp.com",
-databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "oneone-d1c59",
-  storageBucket: "oneone-d1c59.firebasestorage.app",
-  messagingSenderId: "587577047309",
-  appId: "1:587577047309:web:bc162cf114040fbf32d844",
-  measurementId: "G-WTF1YV1T23"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyCSKkGJzYKA2cZ0tNMm171CpLX9a9dAJpY",
+    authDomain: "boldkitchen2.firebaseapp.com",
+    databaseURL: "https://boldkitchen2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "boldkitchen2",
+    storageBucket: "boldkitchen2.firebasestorage.app",
+    messagingSenderId: "924554473256",
+    appId: "1:924554473256:web:20e3429a29910e40c7ea1d"
+  };
 
   const tableButtons = [...document.querySelectorAll('.table')];
   const statusEl = document.getElementById('connectionStatus');
   const resetButton = document.getElementById('resetButton');
+  
   let pointerStart = null;
   let dragSelecting = false;
   let swipeTables = new Set();
   let suppressClick = false;
+  
   const tableStatus = Object.fromEntries(tableButtons.map((b) => [b.dataset.table, 'vacant']));
 
-  // Initialize Firebase directly (Removed Anonymous Auth)
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const tablesRef = ref(db, 'restaurant/tableStatuses');
@@ -163,6 +161,7 @@ databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase
   function paintSelection() {
     tableButtons.forEach((b) => b.classList.toggle('selected', swipeTables.has(b.dataset.table)));
   }
+  
   async function applySwipe() {
     const ids = [...swipeTables];
     if (!ids.length) return;
@@ -177,17 +176,23 @@ databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase
   }
 
   updateStats();
+  
   tableButtons.forEach((button) => {
     button.setAttribute('aria-label', `Table ${button.dataset.table}: vacant`);
     button.setAttribute('aria-pressed', 'false');
     button.title = `Table ${button.dataset.table} — Vacant`;
+    
     button.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0 && event.pointerType === 'mouse') return;
+      // ONLY ALLOW DRAG ON MOUSE (LAPTOP/DESKTOP). Ignore touch (phones/tablets).
+      if (event.pointerType !== 'mouse') return;
+      if (event.button !== 0) return;
+      
       pointerStart = { x: event.clientX, y: event.clientY, id: button.dataset.table, pointerId: event.pointerId };
       dragSelecting = false;
       swipeTables = new Set([button.dataset.table]);
       paintSelection();
     });
+
     button.addEventListener('click', async (event) => {
       if (suppressClick) { event.preventDefault(); suppressClick = false; return; }
       const id = button.dataset.table;
@@ -198,15 +203,23 @@ databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase
   });
 
   document.addEventListener('pointermove', (event) => {
+    // Only track drag for mouse
+    if (event.pointerType !== 'mouse') return;
     if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
-    if (!dragSelecting && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 7) dragSelecting = true;
+    
+    if (!dragSelecting && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 7) {
+      dragSelecting = true;
+    }
     if (dragSelecting) {
       const under = document.elementFromPoint(event.clientX, event.clientY)?.closest('.table');
       if (under) { swipeTables.add(under.dataset.table); paintSelection(); }
     }
   });
+
   window.addEventListener('pointerup', async (event) => {
+    if (event.pointerType !== 'mouse') return;
     if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+    
     if (dragSelecting) {
       suppressClick = true;
       await applySwipe();
@@ -217,6 +230,7 @@ databaseURL: "https://oneone-d1c59-default-rtdb.asia-southeast1.firebasedatabase
     pointerStart = null;
     dragSelecting = false;
   });
+
   window.addEventListener('pointercancel', () => {
     pointerStart = null;
     dragSelecting = false;
